@@ -1,43 +1,74 @@
-# 🤖 Claude Code 개발 지침
+# CLAUDE.md
 
-**claude-nextjs-starters**는 Next.js 15.5.3 + React 19 기반 모던 웹 애플리케이션 스타터 템플릿입니다.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 🛠️ 핵심 기술 스택
-
-- **Framework**: Next.js 15.5.3 (App Router + Turbopack)
-- **Runtime**: React 19.1.0 + TypeScript 5
-- **Styling**: TailwindCSS v4 + shadcn/ui (new-york style)
-- **Forms**: React Hook Form + Zod + Server Actions
-- **UI Components**: Radix UI + Lucide Icons
-- **Development**: ESLint + Prettier + Husky + lint-staged
-
-## 📚 개발 가이드
-
-- **🗺️ 개발 로드맵**: `@/docs/ROADMAP.md`
-- **📋 프로젝트 요구사항**: `@/docs/PRD.md`
-- **📁 프로젝트 구조**: `@/docs/guides/project-structure.md`
-- **🎨 스타일링 가이드**: `@/docs/guides/styling-guide.md`
-- **🧩 컴포넌트 패턴**: `@/docs/guides/component-patterns.md`
-- **⚡ Next.js 15.5.3 전문 가이드**: `@/docs/guides/nextjs-15.md`
-- **📝 폼 처리 완전 가이드**: `@/docs/guides/forms-react-hook-form.md`
-
-## ⚡ 자주 사용하는 명령어
+## Commands
 
 ```bash
-# 개발
-npm run dev         # 개발 서버 실행 (Turbopack)
-npm run build       # 프로덕션 빌드
-npm run check-all   # 모든 검사 통합 실행 (권장)
+npm run dev          # Dev server with Turbopack
+npm run build        # Production build with Turbopack
+npm run check-all    # typecheck + lint + format:check (run before committing)
+npm run typecheck    # tsc --noEmit
+npm run lint         # ESLint
+npm run lint:fix     # ESLint with auto-fix
+npm run format       # Prettier write
+npm run format:check # Prettier check
 
-# UI 컴포넌트
-npx shadcn@latest add button    # 새 컴포넌트 추가
+npx shadcn@latest add <component>  # Add shadcn/ui component
 ```
 
-## ✅ 작업 완료 체크리스트
+There are no tests in this project yet. `npm run check-all` is the full verification step.
 
-```bash
-npm run check-all   # 모든 검사 통과 확인
-npm run build       # 빌드 성공 확인
+## Architecture
+
+```
+src/
+├── app/               # Next.js App Router pages & layouts
+│   ├── layout.tsx     # Root layout: ThemeProvider + Toaster, Geist fonts, lang="ko"
+│   ├── page.tsx       # Home page (hero/features/cta sections)
+│   ├── login/         # /login route
+│   └── signup/        # /signup route
+├── components/
+│   ├── ui/            # shadcn/ui primitives (do not edit manually — use npx shadcn)
+│   ├── layout/        # header, footer, container wrappers
+│   ├── navigation/    # main-nav, mobile-nav
+│   ├── sections/      # hero, features, cta (page-level blocks)
+│   ├── providers/     # theme-provider
+│   └── *.tsx          # Feature components (login-form, signup-form, theme-toggle)
+└── lib/
+    ├── utils.ts       # cn() helper (clsx + tailwind-merge)
+    └── env.ts         # Environment variable validation
 ```
 
-💡 **상세 규칙은 위 개발 가이드 문서들을 참조하세요**
+## Key Conventions
+
+**Server Components first.** Default to Server Components; add `'use client'` only when the component needs state, effects, or event handlers. Pass server-fetched data down as props.
+
+**Next.js 15 async APIs.** `params` and `searchParams` are now `Promise`s — always `await` them:
+```tsx
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+}
+```
+
+**Path aliases.** Always use `@/` (maps to `src/`). Never use relative `../` imports across directories.
+
+**Naming.** Files: `kebab-case.tsx`. Components: `PascalCase`. Folders: `kebab-case`.
+
+**Styling.** Use `cn()` from `@/lib/utils` to merge classes. Use semantic CSS variables (`bg-background`, `text-foreground`, `text-muted-foreground`) — never hardcode colors like `bg-white` or `text-gray-900`. No inline styles.
+
+**Forms.** Use React Hook Form + Zod + Server Actions. Zod schemas live in `src/lib/schemas/`. Server Actions use `'use server'` directive and `useActionState` (React 19) on the client side.
+
+**CVA for variants.** Use `class-variance-authority` when a component needs multiple visual variants.
+
+**Component size.** Keep files under ~300 lines; split if larger.
+
+**Exports.** Named exports for components (`export function Foo`), default exports only for Next.js page files.
+
+## Detailed Guides
+
+- Architecture & file naming: `docs/guides/project-structure.md`
+- Styling rules: `docs/guides/styling-guide.md`
+- Component patterns (composition, CVA, Server/Client boundary): `docs/guides/component-patterns.md`
+- Next.js 15 specifics (caching, Parallel Routes, Intercepting Routes): `docs/guides/nextjs-15.md`
+- Forms (React Hook Form + Zod + Server Actions): `docs/guides/forms-react-hook-form.md`
