@@ -1,8 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { EyeIcon, EyeOffIcon } from 'lucide-react'
+import { useActionState } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -12,144 +11,72 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { signInWithMagicLink, type SignInState } from '@/lib/actions/auth'
+
+const initialState: SignInState = { status: 'idle' }
+
+const ERROR_MESSAGES: Record<string, string> = {
+  missing_code: '인증 코드가 누락되었습니다. 다시 시도해주세요.',
+  invalid_code: '유효하지 않거나 만료된 링크입니다. 다시 로그인해주세요.',
+  not_admin: '관리자로 등록된 이메일이 아닙니다.',
+}
 
 export function LoginForm() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    rememberMe: false,
-  })
-  const [errors, setErrors] = useState({
-    email: '',
-    password: '',
-  })
-
-  const validateForm = () => {
-    const newErrors = { email: '', password: '' }
-
-    if (!formData.email) {
-      newErrors.email = '이메일을 입력해 주세요.'
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = '올바른 이메일 주소를 입력해 주세요.'
-    }
-
-    if (!formData.password) {
-      newErrors.password = '비밀번호를 입력해 주세요.'
-    } else if (formData.password.length < 8) {
-      newErrors.password = '비밀번호는 최소 8자 이상이어야 합니다.'
-    }
-
-    setErrors(newErrors)
-    return !newErrors.email && !newErrors.password
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (validateForm()) {
-      console.log('로그인 데이터:', formData)
-      // 여기에 로그인 로직을 추가하세요
-    }
-  }
-
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-    // 입력 시 에러 초기화
-    if (field === 'email' || field === 'password') {
-      setErrors(prev => ({ ...prev, [field]: '' }))
-    }
-  }
+  const searchParams = useSearchParams()
+  const errorCode = searchParams.get('error')
+  const redirect = searchParams.get('redirect') ?? '/admin'
+  const [state, formAction, isPending] = useActionState(
+    signInWithMagicLink,
+    initialState
+  )
 
   return (
     <Card className="mx-auto w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-center text-2xl font-bold">로그인</CardTitle>
+        <CardTitle className="text-center text-2xl font-bold">
+          관리자 로그인
+        </CardTitle>
         <CardDescription className="text-center">
-          계정에 로그인하여 서비스를 이용하세요
+          등록된 이메일로 매직 링크를 보내드립니다
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {errorCode && ERROR_MESSAGES[errorCode] && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{ERROR_MESSAGES[errorCode]}</AlertDescription>
+          </Alert>
+        )}
+        {state.status === 'success' && state.message && (
+          <Alert className="mb-4">
+            <AlertDescription>{state.message}</AlertDescription>
+          </Alert>
+        )}
+        {state.status === 'error' && state.message && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{state.message}</AlertDescription>
+          </Alert>
+        )}
+        <form action={formAction} className="space-y-4">
+          <input type="hidden" name="redirect" value={redirect} />
           <div className="space-y-2">
             <Label htmlFor="email">이메일</Label>
             <Input
               id="email"
+              name="email"
               type="email"
-              placeholder="your@email.com"
-              value={formData.email}
-              onChange={e => handleInputChange('email', e.target.value)}
-              className={errors.email ? 'border-red-500' : ''}
+              autoComplete="email"
+              placeholder="admin@example.com"
+              required
+              disabled={isPending}
             />
-            {errors.email && (
-              <p className="text-sm text-red-500">{errors.email}</p>
-            )}
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">비밀번호</Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="비밀번호를 입력하세요"
-                value={formData.password}
-                onChange={e => handleInputChange('password', e.target.value)}
-                className={errors.password ? 'border-red-500 pr-10' : 'pr-10'}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute top-0 right-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOffIcon className="h-4 w-4" />
-                ) : (
-                  <EyeIcon className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-            {errors.password && (
-              <p className="text-sm text-red-500">{errors.password}</p>
-            )}
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="rememberMe"
-              checked={formData.rememberMe}
-              onCheckedChange={checked =>
-                handleInputChange('rememberMe', checked === true)
-              }
-            />
-            <Label
-              htmlFor="rememberMe"
-              className="cursor-pointer text-sm font-normal"
-            >
-              로그인 상태 유지
-            </Label>
-          </div>
-
-          <Button type="submit" className="w-full">
-            로그인하기
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending ? '전송 중...' : '로그인 링크 받기'}
           </Button>
         </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-muted-foreground text-sm">
-            아직 계정이 없으신가요?{' '}
-            <Link
-              href="/signup"
-              className="text-primary underline-offset-4 hover:underline"
-            >
-              회원가입
-            </Link>
-          </p>
-        </div>
       </CardContent>
     </Card>
   )
