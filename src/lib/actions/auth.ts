@@ -50,6 +50,12 @@ export async function signInWithMagicLink(
     callbackUrl.searchParams.set('redirect', parsed.data.redirect)
   }
 
+  console.log('[signInWithMagicLink] attempt', {
+    email: parsed.data.email,
+    callbackUrl: callbackUrl.toString(),
+    host,
+  })
+
   const { error } = await supabase.auth.signInWithOtp({
     email: parsed.data.email,
     options: {
@@ -59,11 +65,19 @@ export async function signInWithMagicLink(
   })
 
   if (error) {
+    console.error('[signInWithMagicLink] supabase error', {
+      name: error.name,
+      message: error.message,
+      status: error.status,
+      code: error.code,
+    })
     return {
       status: 'error',
-      message: '로그인 메일 전송에 실패했습니다. 다시 시도해주세요',
+      message: `로그인 메일 전송 실패: ${error.message}`,
     }
   }
+
+  console.log('[signInWithMagicLink] success', { email: parsed.data.email })
 
   return {
     status: 'success',
