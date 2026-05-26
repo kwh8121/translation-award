@@ -23,9 +23,6 @@ export function ArticleCard({ article }: { article: Article }) {
           alt=""
           loading="lazy"
           className="aspect-video w-full object-cover transition group-hover:scale-105"
-          onError={e => {
-            e.currentTarget.style.opacity = '0.3'
-          }}
         />
       </div>
       <div className="flex flex-1 flex-col gap-2 p-3 sm:p-4">
