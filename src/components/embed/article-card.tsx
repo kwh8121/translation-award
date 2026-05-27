@@ -14,9 +14,9 @@ export function ArticleCard({ article }: { article: Article }) {
       href={article.article_url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900"
+      className="group flex flex-col overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-700 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-100"
     >
-      <div className="relative w-full overflow-hidden bg-zinc-100">
+      <div className="relative w-full overflow-hidden bg-zinc-800">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={article.thumbnail_url}
@@ -26,10 +26,10 @@ export function ArticleCard({ article }: { article: Article }) {
         />
       </div>
       <div className="flex flex-1 flex-col gap-2 p-3 sm:p-4">
-        <h3 className="line-clamp-2 text-base font-semibold text-zinc-900 sm:text-lg">
+        <h3 className="line-clamp-2 text-base font-semibold text-zinc-50 sm:text-lg">
           {article.title}
         </h3>
-        <p className="line-clamp-3 flex-1 text-sm text-zinc-600">
+        <p className="line-clamp-3 flex-1 text-sm text-zinc-400">
           {article.lead}
         </p>
         <time dateTime={article.published_at} className="text-xs text-zinc-500">

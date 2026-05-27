@@ -44,7 +44,7 @@ export function EmbedPagination({
         href={pageHref(Math.max(1, currentPage - 1))}
         aria-label="이전"
         aria-disabled={prevDisabled}
-        className={`inline-flex h-9 min-w-9 items-center justify-center rounded-md border border-zinc-200 bg-white px-2 text-sm text-zinc-700 transition hover:bg-zinc-100 ${
+        className={`inline-flex h-9 min-w-9 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 px-2 text-sm text-zinc-300 transition hover:bg-zinc-800 ${
           prevDisabled ? 'pointer-events-none opacity-40' : ''
         }`}
       >
@@ -57,7 +57,7 @@ export function EmbedPagination({
           p === 'ellipsis' ? (
             <span
               key={`e${i}`}
-              className="px-2 text-sm text-zinc-400"
+              className="px-2 text-sm text-zinc-500"
               aria-hidden
             >
               …
@@ -69,8 +69,8 @@ export function EmbedPagination({
               aria-current={p === currentPage ? 'page' : undefined}
               className={`inline-flex h-9 min-w-9 items-center justify-center rounded-md border px-2 text-sm transition ${
                 p === currentPage
-                  ? 'border-zinc-900 bg-zinc-900 text-white'
-                  : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100'
+                  ? 'border-zinc-50 bg-zinc-50 text-zinc-950'
+                  : 'border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800'
               }`}
             >
               {p}
@@ -80,7 +80,7 @@ export function EmbedPagination({
       </div>
 
       {/* 모바일: 현재/총 페이지만 */}
-      <span className="px-2 text-sm text-zinc-700 sm:hidden">
+      <span className="px-2 text-sm text-zinc-400 sm:hidden">
         {currentPage} / {totalPages}
       </span>
 
@@ -88,7 +88,7 @@ export function EmbedPagination({
         href={pageHref(Math.min(totalPages, currentPage + 1))}
         aria-label="다음"
         aria-disabled={nextDisabled}
-        className={`inline-flex h-9 min-w-9 items-center justify-center rounded-md border border-zinc-200 bg-white px-2 text-sm text-zinc-700 transition hover:bg-zinc-100 ${
+        className={`inline-flex h-9 min-w-9 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 px-2 text-sm text-zinc-300 transition hover:bg-zinc-800 ${
           nextDisabled ? 'pointer-events-none opacity-40' : ''
         }`}
       >
