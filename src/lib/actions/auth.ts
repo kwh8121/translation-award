@@ -73,7 +73,7 @@ export async function signInWithMagicLink(
     })
     return {
       status: 'error',
-      message: `로그인 메일 전송 실패: ${error.message}`,
+      message: '로그인 메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요',
     }
   }
 
