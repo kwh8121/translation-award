@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-function pageHref(page: number) {
-  return page === 1 ? '/embed' : `/embed?page=${page}`
+function pageHref(page: number, basePath: string) {
+  return page === 1 ? basePath : `${basePath}?page=${page}`
 }
 
 function buildPageList(
@@ -25,9 +25,11 @@ function buildPageList(
 export function EmbedPagination({
   currentPage,
   totalPages,
+  basePath = '/embed',
 }: {
   currentPage: number
   totalPages: number
+  basePath?: string
 }) {
   if (totalPages <= 1) return null
 
@@ -41,7 +43,7 @@ export function EmbedPagination({
       className="mt-6 flex items-center justify-center gap-1 sm:gap-2"
     >
       <Link
-        href={pageHref(Math.max(1, currentPage - 1))}
+        href={pageHref(Math.max(1, currentPage - 1), basePath)}
         aria-label="이전"
         aria-disabled={prevDisabled}
         className={`inline-flex h-9 min-w-9 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 px-2 text-sm text-zinc-300 transition hover:bg-zinc-800 ${
@@ -65,7 +67,7 @@ export function EmbedPagination({
           ) : (
             <Link
               key={p}
-              href={pageHref(p)}
+              href={pageHref(p, basePath)}
               aria-current={p === currentPage ? 'page' : undefined}
               className={`inline-flex h-9 min-w-9 items-center justify-center rounded-md border px-2 text-sm transition ${
                 p === currentPage
@@ -85,7 +87,7 @@ export function EmbedPagination({
       </span>
 
       <Link
-        href={pageHref(Math.min(totalPages, currentPage + 1))}
+        href={pageHref(Math.min(totalPages, currentPage + 1), basePath)}
         aria-label="다음"
         aria-disabled={nextDisabled}
         className={`inline-flex h-9 min-w-9 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 px-2 text-sm text-zinc-300 transition hover:bg-zinc-800 ${

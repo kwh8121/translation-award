@@ -2,7 +2,11 @@
 
 import { useEffect } from 'react'
 
-export function HeightReporter() {
+export function HeightReporter({
+  messageType = 'literary-news:height',
+}: {
+  messageType?: string
+}) {
   useEffect(() => {
     if (typeof window === 'undefined' || window.parent === window) return
 
@@ -14,7 +18,7 @@ export function HeightReporter() {
       )
       if (Math.abs(height - lastHeight) < 2) return
       lastHeight = height
-      window.parent.postMessage({ type: 'literary-news:height', height }, '*')
+      window.parent.postMessage({ type: messageType, height }, '*')
     }
 
     send()
@@ -26,7 +30,7 @@ export function HeightReporter() {
       observer.disconnect()
       window.removeEventListener('load', send)
     }
-  }, [])
+  }, [messageType])
 
   return null
 }

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { HeightReporter } from '@/components/embed/height-reporter'
 
 export const metadata: Metadata = {
   title: 'Literary News',
@@ -11,10 +10,5 @@ export default function EmbedLayout({
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <div className="min-h-screen bg-black text-zinc-100">
-      {children}
-      <HeightReporter />
-    </div>
-  )
+  return <div className="min-h-screen bg-black text-zinc-100">{children}</div>
 }
