@@ -41,8 +41,8 @@ export function ArticleTable({ articles }: { articles: Article[] }) {
     <>
       {/* 데스크탑: 테이블 */}
       <div className="hidden md:block">
-        <div className="bg-background rounded-lg border">
-          <Table>
+        <div className="bg-background overflow-hidden rounded-lg border">
+          <Table className="w-full table-fixed">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-24">썸네일</TableHead>
@@ -68,11 +68,11 @@ export function ArticleTable({ articles }: { articles: Article[] }) {
                       href={article.article_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="hover:underline"
+                      className="block truncate hover:underline"
                     >
                       {article.title}
                     </a>
-                    <p className="text-muted-foreground mt-1 line-clamp-1 text-xs">
+                    <p className="text-muted-foreground mt-1 truncate text-xs">
                       {article.lead}
                     </p>
                   </TableCell>
