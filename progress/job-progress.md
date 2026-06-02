@@ -1,9 +1,16 @@
 # Literary News CMS + iframe 임베드 진행 상황
 
-> 최종 갱신: 2026-05-27
+> 최종 갱신: 2026-06-02
 > 프로젝트: `thekoreatimes.imweb.me/LiteraryNews` 뉴스 영역을 iframe으로 대체
 > 스택: Next.js 16.2.6 + React 19 + Supabase + Tailwind 4 + shadcn/ui
-> 상태: **운영 배포 완료, imweb 임베드 적용 완료**
+> 상태: **운영 배포 완료 + Award Ceremony 콘텐츠 타입 추가 완료**
+
+## 📰 두 콘텐츠 타입
+
+| 타입           | 관리자          | iframe          | 레이아웃                | 테이블             |
+| -------------- | --------------- | --------------- | ----------------------- | ------------------ |
+| Literary News  | `/admin`        | `/embed`        | 3x3 카드 그리드         | `articles`         |
+| Award Ceremony | `/admin/awards` | `/embed/awards` | 수평 리스트 + VIEW MORE | `award_ceremonies` |
 
 ---
 
@@ -82,6 +89,27 @@
 - [x] imweb HTML 위젯에 코드 삽입 완료
 - [x] iframe 정상 표시 + postMessage 자동 높이 조정 동작 확인
 
+### 1.9 Award Ceremony 콘텐츠 타입 추가 (2026-06-02)
+
+- [x] Supabase 신규 테이블 `award_ceremonies` + RLS + 트리거 (사용자가 SQL Editor 실행 완료)
+- [x] 타입/스키마: `types/award-ceremony.ts`, `schemas/award-ceremony.ts`
+- [x] Server Actions: `lib/actions/award-ceremonies.ts` (create/update/delete)
+- [x] Admin 라우트 3개: `/admin/awards`, `/admin/awards/new`, `/admin/awards/[id]/edit`
+- [x] Admin 컴포넌트: `award-ceremony-{form,table}.tsx`, `delete-award-ceremony-button.tsx`
+- [x] AdminHeader 탭 2개 (`'use client'` 전환 + `usePathname` 활성 표시)
+- [x] Embed 라우트: `/embed/awards` (수평 리스트 + VIEW MORE 버튼)
+- [x] Embed 컴포넌트: `award-ceremony-row.tsx`
+- [x] 공통 컴포넌트 prop 확장 (기존 호출부 무영향)
+  - `HeightReporter` 에 `messageType` prop (Literary 는 `literary-news:height`, Award 는 `award-ceremony:height`)
+  - `EmbedPagination` 에 `basePath` prop
+- [x] `HeightReporter` 를 embed/layout 에서 각 page 로 이동 (두 iframe 메시지 분리)
+- [x] imweb 스니펫: `docs/embed-snippet-awards.html`
+
+### 1.10 UX 마감 수정 (2026-06-02)
+
+- [x] `/admin` 테이블 가로 스크롤바 제거 (`table-fixed w-full` + `truncate`)
+- [x] iframe 내부 세로 스크롤바 제거 (snippets 에 `scrolling="no"` 추가)
+
 ---
 
 ## 2. 남은 / 권장 작업
@@ -110,21 +138,52 @@
 
 ## 3. 주요 파일 인덱스
 
+### 공통 (인증 / 인프라)
+
 | 경로                                             | 역할                                              |
 | ------------------------------------------------ | ------------------------------------------------- |
 | `src/lib/env.ts`                                 | 환경변수 Zod 검증 + `isAdminEmail()`              |
 | `src/proxy.ts`                                   | Next.js 16 미들웨어 (세션 갱신 + admin 가드)      |
 | `src/lib/supabase/{client,server,middleware}.ts` | Supabase 클라이언트 3종                           |
-| `src/lib/schemas/article.ts`                     | 기사 Zod 스키마                                   |
-| `src/lib/actions/{auth,articles}.ts`             | Server Actions                                    |
+| `src/lib/actions/auth.ts`                        | 매직링크 로그인 / 로그아웃                        |
 | `src/app/(admin)/layout.tsx`                     | 관리자 인증 가드                                  |
-| `src/app/(admin)/admin/**`                       | CMS 페이지                                        |
-| `src/app/embed/**`                               | iframe 페이지 (다크 테마)                         |
+| `src/components/admin/admin-header.tsx`          | Literary / Award 탭 nav (`'use client'`)          |
 | `src/app/auth/callback/route.ts`                 | 매직링크 콜백                                     |
 | `next.config.ts`                                 | 보안 헤더 (CSP frame-ancestors / X-Frame-Options) |
-| `supabase/schema.sql`                            | DB 스키마 + RLS                                   |
-| `docs/embed-snippet.html`                        | imweb 임베드 코드 (실제 도메인 적용 완료)         |
-| `docs/literary-news-setup.md`                    | 설정 가이드                                       |
+| `supabase/schema.sql`                            | DB 스키마 + RLS (두 테이블 모두)                  |
+| `docs/literary-news-setup.md`                    | 초기 설정 가이드                                  |
+
+### Literary News
+
+| 경로                                                                          | 역할                                 |
+| ----------------------------------------------------------------------------- | ------------------------------------ |
+| `src/types/article.ts` + `src/lib/schemas/article.ts`                         | 타입 / Zod 스키마                    |
+| `src/lib/actions/articles.ts`                                                 | CRUD Server Actions                  |
+| `src/app/(admin)/admin/page.tsx` + `articles/{new,[id]/edit}/page.tsx`        | CMS 페이지                           |
+| `src/components/admin/article-{form,table}.tsx` + `delete-article-button.tsx` | CMS UI                               |
+| `src/app/embed/page.tsx`                                                      | iframe 그리드 페이지                 |
+| `src/components/embed/article-card.tsx`                                       | 카드 (3x3 그리드)                    |
+| `docs/embed-snippet.html`                                                     | imweb 임베드 코드 (`scrolling="no"`) |
+
+### Award Ceremony
+
+| 경로                                                                                        | 역할                                      |
+| ------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| `src/types/award-ceremony.ts` + `src/lib/schemas/award-ceremony.ts`                         | 타입 / Zod 스키마                         |
+| `src/lib/actions/award-ceremonies.ts`                                                       | CRUD Server Actions                       |
+| `src/app/(admin)/admin/awards/page.tsx` + `awards/{new,[id]/edit}/page.tsx`                 | CMS 페이지                                |
+| `src/components/admin/award-ceremony-{form,table}.tsx` + `delete-award-ceremony-button.tsx` | CMS UI                                    |
+| `src/app/embed/awards/page.tsx`                                                             | iframe 수평 리스트 페이지                 |
+| `src/components/embed/award-ceremony-row.tsx`                                               | 1행 컴포넌트 (썸네일+제목+리드+VIEW MORE) |
+| `docs/embed-snippet-awards.html`                                                            | imweb 임베드 코드 (`scrolling="no"`)      |
+
+### Embed 공용 (두 타입이 공유)
+
+| 경로                                        | 역할                                     |
+| ------------------------------------------- | ---------------------------------------- |
+| `src/app/embed/layout.tsx`                  | 다크 테마 (`bg-black`) 래퍼              |
+| `src/components/embed/embed-pagination.tsx` | `basePath` prop 으로 두 라우트 모두 지원 |
+| `src/components/embed/height-reporter.tsx`  | `messageType` prop 으로 메시지 분리      |
 
 ---
 
@@ -141,11 +200,11 @@
 
 ## 5. 운영 절차 메모
 
-### 기사 추가/수정
+### 콘텐츠 추가/수정
 
 1. https://translation-award.vercel.app/login → 관리자 이메일 입력
-2. 메일에서 매직링크 클릭 → `/admin` 진입
-3. "새 기사" 또는 기존 기사 편집/삭제
+2. 메일에서 매직링크 클릭 → 헤더에서 **Literary News** 또는 **Award Ceremony** 탭 선택
+3. "새 기사" / "새 어워드" 버튼으로 등록, 또는 목록에서 편집/삭제
 
 ### 새 관리자 추가
 
@@ -162,3 +221,11 @@
 
 - 매직링크는 24시간 유효
 - Supabase 무료 플랜: 시간당 ~3-4건 이메일 발송 제한
+
+### imweb HTML 위젯 (참고)
+
+같은 imweb 페이지에 두 iframe 공존 가능. 각각 다른 `id` 와 `postMessage` type 사용:
+
+- Literary News iframe: `id="literary-news-frame"` + listens `literary-news:height`
+- Award Ceremony iframe: `id="award-ceremony-frame"` + listens `award-ceremony:height`
+- 두 iframe 모두 `scrolling="no"` 필수 (내부 스크롤바 방지)

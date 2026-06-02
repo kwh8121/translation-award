@@ -97,6 +97,40 @@
 - Authentication → Email Templates → Magic Link 편집
 - 기본 발신자 변경하려면 Project Settings → Auth → SMTP Settings 에서 커스텀 SMTP 등록
 
+### 2.7 새 콘텐츠 타입 추가 (예: Award Ceremony 패턴)
+
+Literary News 와 동일한 데이터 구조의 새 콘텐츠 타입을 추가하는 검증된 패턴.
+실제 수행 결과 영향 폭은 신규 파일 10~12개, 기존 파일 수정 5개 내외.
+
+**원칙**: 테이블명 / 라우트 / 컴포넌트명만 다르고 구조는 동일 → 기존 `articles` / `embed` 코드를 복제 후 새 이름으로 교체.
+
+**순서**:
+
+1. **DB**: `supabase/schema.sql` 에 새 섹션 추가 (테이블+RLS+트리거, 패턴 동일). 사용자가 SQL Editor 에서 실행 필요
+2. **타입 / 스키마**: `src/types/<name>.ts` + `src/lib/schemas/<name>.ts` 복제
+3. **Server Actions**: `src/lib/actions/<names>.ts` — `from()` 테이블명, `revalidatePath` 경로, `redirect` 경로, 함수명, ActionState 타입 6 곳 교체
+4. **Embed 공통 컴포넌트** 확장 (한 번만 필요, 이후 콘텐츠 타입 추가는 그냥 prop 만 지정):
+   - `HeightReporter` 에 `messageType` prop (기본값 유지)
+   - `EmbedPagination` 에 `basePath` prop (기본값 `/embed`)
+   - **중요**: `HeightReporter` 는 부모 `embed/layout.tsx` 가 아닌 각 leaf page 에서 마운트해야 함 (그래야 같은 imweb 페이지에 두 iframe 공존 시 메시지 충돌 없음)
+5. **Admin 컴포넌트**: `form`, `table`, `delete-button` 3개 복제 후 import / 경로 / 라벨 교체
+6. **Admin 라우트**: `/admin/<plural>` 3개 (list/new/edit)
+7. **AdminHeader**: `tabs` 배열에 항목 추가 (이미 `'use client'` + `usePathname` 으로 구현됨)
+8. **Embed 라우트**: `/embed/<plural>` + 전용 row/card 컴포넌트
+   - 페이지에 `<HeightReporter messageType="<name>:height" />` 마운트
+   - `<EmbedPagination basePath="/embed/<plural>" />`
+9. **imweb 스니펫**: `docs/embed-snippet-<name>.html` — iframe `id`, `src`, listen type 모두 새 이름으로
+   - **`scrolling="no"` 필수** (내부 스크롤바 방지)
+10. **next.config.ts**: 수정 불필요 — `/embed/:path*` 매처가 자동 적용
+
+**검증된 결정사항**:
+
+- 별도 테이블 vs 같은 테이블 + type 컬럼 → **별도 테이블** 권장 (코드 격리)
+- AdminHeader 탭 vs 사이드바 → **탭** (현재 최대 2~3개 타입까지는 OK)
+- 임베드 스니펫 한 파일 vs 분리 → **분리** (imweb 위젯에 한 쪽만 적용 가능)
+
+**참고 커밋**: `236cb6e` (Award Ceremony 전체 추가), 디프로 패턴 확인 가능
+
 ---
 
 ## 3. 함정 (Pitfalls) — 이미 한 번 부딪힌 것들
@@ -146,6 +180,23 @@
 
 - `error.message` 만 직렬화 가능한 값으로 추출해서 반환
 - 상세는 `console.error` 로 로깅 (Vercel Logs 에 기록됨)
+
+### 3.9 shadcn Table 의 가로 스크롤바 — `table-fixed` 없으면 셀이 무한 확장
+
+- shadcn `<Table>` 기본은 `table-layout: auto` → 셀 내용 길이만큼 셀이 늘어남
+- 영어 문장처럼 단어 사이 공백이 있어도 `<TableHead>` 에 `w-24` 같은 폭을 줘도 보장 안 됨
+- `line-clamp-N` 은 **세로 줄 수만** 제한, 셀 폭은 제어 못함
+- **해결**: `<Table className="w-full table-fixed">` + 셀 안에 `truncate` (또는 `block truncate` for `<a>` 안의 텍스트) + 래퍼에 `overflow-hidden`
+- 관련 커밋: `aaebd4b`
+
+### 3.10 iframe 내부 세로 스크롤바 — `scrolling="no"` 필수
+
+- HeightReporter 의 postMessage 가 도착하기 전 짧은 순간 iframe 의 `min-height: 600px` 보다 콘텐츠가 길면 iframe 자체 스크롤바가 깜빡 표시됨
+- 부모 페이지 (예: imweb) 에 노출되어 보기 안 좋음
+- **해결**: 임베드 스니펫의 `<iframe>` 에 `scrolling="no"` 속성 추가
+  - HTML5 에서 deprecated 이지만 모든 주요 브라우저 지원
+  - postMessage 자동 높이 조정이 정상 동작하므로 콘텐츠 클립 우려 없음
+- 관련 커밋: `254c172`
 
 ---
 
