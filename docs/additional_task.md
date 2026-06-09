@@ -83,9 +83,22 @@ const EMBED_FONT_FAMILY =
 
 **커밋**: `e870c45` 🎨 style: iframe 임베드 페이지에 imweb 호스트 폰트(Inter) 적용
 
-### 1.3 (인프라) gh CLI 설치 — 인증 정상화
+### 1.3 (인프라) gh CLI 설치 + PAT 권한 정상화
 
-push 시 `/usr/bin/gh: not found` 에러 발생 → 사용자가 `sudo apt install gh` 로 설치 완료. 버전 `2.45.0`, 계정 `kwh8121` 인증 정상. 단 git 의 credential helper 와 gh 의 연동에 quirk 가 남아 있어 일반 `git push` 가 간헐적으로 실패함 → 토큰 직접 추출 방식 (`https://kwh8121:${TOKEN}@github.com/...`) 으로 우회.
+**단계별 해결**:
+
+1. **gh CLI 미설치 발견** — push 시 `/usr/bin/gh: not found` 에러
+   - 사용자가 `sudo apt install gh` 로 설치 (버전 `2.45.0`)
+2. **기존 PAT 거절** — gh credential helper 가 토큰 반환은 정상이나 git push 가 `Invalid username or token` 으로 거절
+   - 임시 우회: 토큰 직접 추출 방식 (`https://kwh8121:${TOKEN}@github.com/...`)
+3. **새 Fine-grained PAT 발급** (`Everybound`) → Repository access "All repositories" 지정
+   - 1차 시도: 403 Permission denied (read 만 가능)
+4. **`Contents: Read and write` 권한 명시 추가** → 정상화
+   - 검증: `git push --dry-run` → `Everything up-to-date` ✅
+
+**최종 상태**: `git push origin main` 표준 명령이 정상 동작. 토큰 직접 URL 우회 불필요.
+
+**교훈**: GitHub Fine-grained PAT 는 `Metadata: Required` 외에 `Contents: Read and write` 를 별도로 명시해야 push 가능. Classic PAT (`repo` scope 하나) 보다 세팅 실수 여지가 크다.
 
 ---
 
@@ -160,4 +173,3 @@ e870c45 🎨 style: iframe 임베드 페이지에 imweb 호스트 폰트(Inter) 
 
 - 한글 본문이 추가될 경우 — KoPubBatang Web 또는 Pretendard 같은 한글 폰트도 `next/font` 로 추가 로드 고려
 - 폰트 로드 성능 — 현재 Inter `subsets: ['latin']` 만 로드 (Korean / Cyrillic 미포함). 한글 본문 등장 시 옵션 확장 필요
-- 토큰/credential 안정화 — gh CLI 와 git credential helper 간 quirk 근본 해결 (SSH key 전환 또는 PAT 재발급 + `gh auth login` 재실행)
